@@ -1,0 +1,36 @@
+version: '3'
+
+services:
+  node_0:
+    image: 'cassandra:3.0'
+    restart: always
+    ports:
+      - '10042:9042'
+    environment:
+      - CASSANDRA_CLUSTER_NAME=test_cluster
+      - CASSANDRA_SEEDS=node_0, node_1
+      - CASSANDRA_LISTEN_ADDRESS=node_0
+    links:
+      - node_1
+
+  node_1:
+    image: 'cassandra:3.0'
+    restart: always
+    ports:
+      - '11042:9042'
+    environment:
+      - CASSANDRA_CLUSTER_NAME=test_cluster
+      - CASSANDRA_SEEDS=node_0, node_1
+      - CASSANDRA_LISTEN_ADDRESS=node_1
+
+  app:
+      image: python:3.6.5
+      environment:
+          - PYTHONPATH=.
+      volumes:
+        - .:/app
+        - ./.docker-mount/app/.cache:/root/.cache
+      command: bash -c "pip install --upgrade pip && pip install -r /app/requirements.txt && tail -f /dev/null"
+      links:
+        - node_0
+        - node_1
